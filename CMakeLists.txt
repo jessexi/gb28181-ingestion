@@ -34,8 +34,23 @@ add_subdirectory(src/sip)
 # add the executable
 add_executable(${project_name} application.cpp )
 
+set(pjsip_list "")
 
-target_link_libraries(${project_name} PUBLIC ${PJSIP_LIBRARIES} SIP_LIB )
+foreach(dep ${PJSIP_LIBRARIES})
+if("${dep}" MATCHES "no-exclude-audiodev")
+    message(STATUS "exclude - ${dep}")
+else()
+    message(STATUS "include - ${dep}")
+    list(APPEND pjsip_list "${dep}")
+endif()
+endforeach()
+
+
+foreach(dep ${pjsip_list})
+    message(STATUS "jesse-check - ${dep}")
+endforeach()
+
+target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB )
 target_include_directories(${project_name} PUBLIC
                           "${PROJECT_SOURCE_DIR}/src/sip"
                           )

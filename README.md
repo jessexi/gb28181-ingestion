@@ -7,7 +7,7 @@ https://www.pjsip.org/download.htm
 Install:
 ```
 > download source
-> ./configure
+> ./configure --enable-shared  --disable-sound  --disable-video
 > make dep
 > make -j4
 > make install

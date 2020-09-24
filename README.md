@@ -5,8 +5,10 @@ build a gb28181 client
 ### pjsip
 https://www.pjsip.org/download.htm
 Install:
+```
 > download source
 > ./configure
 > make dep
 > make -j4
 > make install
+```

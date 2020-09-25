@@ -12,3 +12,14 @@ Install:
 > make -j4
 > make install
 ```
+
+###  JRTPLIB
+https://github.com/j0r1/JRTPLIB
+Install:
+```
+> download source
+> cd JRTPLIB
+> mkdir build
+> cd build
+> cmake .. && make -j4 && sudo make install
+```

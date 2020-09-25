@@ -15,12 +15,23 @@ set(CMAKE_CXX_STANDARD 11)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
+cmake_policy(SET CMP0081 NEW)
 
 # set the project name
 project(${project_name} VERSION ${gb_version})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PJSIP libpjproject>=1.14 REQUIRED)
+
+
+find_package(JRTPLIB REQUIRED)
+
+include_directories(${JRTPLIB_INCLUDE_DIRS})
+link_directories(${JRTPLIB_LIBRARY_DIRS})
+
+foreach(dep ${JRTPLIB_LIBRARIES})
+    message(STATUS "JRTPLIB - ${dep}")
+endforeach()
 
 include_directories(${PJSIP_INCLUDE_DIRS})
 link_directories(${PJSIP_LIBRARY_DIRS})
@@ -45,7 +56,7 @@ else()
 endif()
 endforeach()
 
-target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB )
+target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES})
 target_include_directories(${project_name} PUBLIC
                           "${PROJECT_SOURCE_DIR}/src/sip"
                           )

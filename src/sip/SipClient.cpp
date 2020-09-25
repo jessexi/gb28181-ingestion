@@ -1,7 +1,9 @@
 #include "SipClient.hpp"
+#include "ThreadPool.h"
 
 bool SipClient::quit_flag = false;
 pjsip_endpoint *SipClient::m_sipEndpt = NULL;
+ThreadPool *SipClient::executor = new ThreadPool(2);
 
 static pjsip_module clientSipMoudle =
     {
@@ -290,12 +292,26 @@ void SipClient::setClientParamContext()
 void SipClient::onVidoPlay()
 {
     this->setClientParamContext();
+    m_rtpRecver = new RtpRecver();
+    // connect(m_rtpRecver);
+
     std::string deviceid = m_tsxContext.fromID;
-    std::string recvip = m_tsxContext.toIP;
-    int recvport = m_tsxContext.toPort;
+    std::string recvip = "127.0.0.1";
+    int recvport = 5056;
+
+    m_rtpRecver->init(recvip, recvport);
+
+    executor->enqueue(SipClient::runRtpServer, m_rtpRecver);
 
     this->sendInvite(deviceid, recvip, recvport);
 };
+
+void  SipClient::runRtpServer(RtpRecver *rtpRecver){
+   std::cout << "start to . bind server" << std::endl;
+
+   rtpRecver->run(); 
+
+}
 
 pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
 {

@@ -2,6 +2,8 @@
 #define SIP_CLIENT_HPP
 
 #include "Defines.hpp"
+#include "rtprecver.hpp"
+#include "ThreadPool.h"
 
 
 class SipClient
@@ -16,11 +18,13 @@ private:
     pj_pool_t *m_sipPool;
 
     static pjsip_endpoint *m_sipEndpt;
+    static ThreadPool *executor;
     static bool quit_flag;
     bool m_invInit = false;
     pj_thread_t *m_keepalivethread;
     pj_thread_t *m_eventloopthread;
     LocalSipType m_localSipType;
+    RtpRecver *m_rtpRecver;
 
 public:
     SipClient();
@@ -32,6 +36,7 @@ public:
     pj_status_t unregisterClient(SIPClient &cltparam);
     int initInvParam(TransportContext &tsxContext);
     void onVidoPlay();
+    static void runRtpServer( RtpRecver *rtpRecver);
     void startEventLoop();
     static int keepAlive_thread(void *arg);
     void sendKeepAlive(std::string deviceid);

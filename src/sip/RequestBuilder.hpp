@@ -7,14 +7,16 @@ class RequestBuilder
 {
 private:
   pj::Endpoint *ep;
+  std::string CONTENT_CRLF = "\r\n"; 
 
 public:
     RequestBuilder(/* args */);
     void init();
+    std::string createSDP();
+    std::string buildInvite();
+    pj_str_t pjHeaderBuilder();
+    void invite();
     ~RequestBuilder();
 };
-
-
-
 
 #endif

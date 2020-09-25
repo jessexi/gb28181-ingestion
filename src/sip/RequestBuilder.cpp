@@ -17,20 +17,20 @@ void RequestBuilder::init()
 {
     std::cout << "builder init!" << std::endl;
 
-    Endpoint ep;
+    ep = new Endpoint();
 
-    ep.libCreate();
+    ep->libCreate();
 
     // Initialize endpoint
     EpConfig ep_cfg;
-    ep.libInit(ep_cfg);
+    ep->libInit(ep_cfg);
 
     // Create SIP transport. Error handling sample is shown
     TransportConfig tcfg;
-    tcfg.port = 5060;
+    tcfg.port = 5061;
     try
     {
-        ep.transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
+        ep->transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
     }
     catch (Error &err)
     {
@@ -38,19 +38,22 @@ void RequestBuilder::init()
     }
 
     // Start the library (worker threads etc)
-    ep.libStart();
+    ep->libStart();
     std::cout << "*** PJSUA2 STARTED ***" << std::endl;
 
-    // Configure an AccountConfig
-    AccountConfig acfg;
-    acfg.idUri = "sip:test@pjsip.org";
-    acfg.regConfig.registrarUri = "sip:pjsip.org";
-    AuthCredInfo cred("digest", "*", "test", 0, "secret");
-    acfg.sipConfig.authCreds.push_back(cred);
+    //Add account
+    AccountConfig accCfg;
+    accCfg.idUri = "sip:34020000022000000002@172.18.64.51:5061";
+    accCfg.regConfig.registrarUri = "sip:34020000002000000001@172.18.64.231:15060";
+    AuthCredInfo cred("digest", "3402000000", "34020000002000000001", 0, "12345678");
+    accCfg.sipConfig.authCreds.push_back(cred);
+    std::cout << std::endl << "REGISTER" << std::endl << std::endl;
+
+
 
     // Create the account
     MyAccount *acc = new MyAccount;
-    acc->create(acfg);
+    acc->create(accCfg);
 
     // Here we don't have anything else to do..
     pj_thread_sleep(10000);
@@ -66,4 +69,5 @@ RequestBuilder::RequestBuilder(/* args */)
 
 RequestBuilder::~RequestBuilder()
 {
+    delete ep;
 }

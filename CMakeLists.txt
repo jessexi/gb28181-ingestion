@@ -8,7 +8,7 @@ endif()
 
 cmake_minimum_required(VERSION 2.8)
 
-set(project_name "gb28191")
+set(project_name "gb28181")
 set(gb_version 1.0.0)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -43,11 +43,6 @@ else()
     message(STATUS "include - ${dep}")
     list(APPEND pjsip_list "${dep}")
 endif()
-endforeach()
-
-
-foreach(dep ${pjsip_list})
-    message(STATUS "jesse-check - ${dep}")
 endforeach()
 
 target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB )

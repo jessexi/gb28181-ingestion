@@ -22,31 +22,31 @@ public:
 
 void RequestBuilder::init()
 {
-    // std::cout << "builder init!" << std::endl;
+    std::cout << "builder init!" << std::endl;
 
-    // ep = new Endpoint();
+    ep = new Endpoint();
 
-    // ep->libCreate();
+    ep->libCreate();
 
-    // // Initialize endpoint
-    // EpConfig ep_cfg;
-    // ep->libInit(ep_cfg);
+    // Initialize endpoint
+    EpConfig ep_cfg;
+    ep->libInit(ep_cfg);
 
-    // // Create SIP transport. Error handling sample is shown
-    // TransportConfig tcfg;
-    // tcfg.port = 5060;
-    // try
-    // {
-    //     ep->transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
-    // }
-    // catch (Error &err)
-    // {
-    //     std::cout << err.info() << std::endl;
-    // }
+    // Create SIP transport. Error handling sample is shown
+    TransportConfig tcfg;
+    tcfg.port = 5060;
+    try
+    {
+        ep->transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
+    }
+    catch (Error &err)
+    {
+        std::cout << err.info() << std::endl;
+    }
 
-    // // Start the library (worker threads etc)
-    // ep->libStart();
-    // std::cout << "*** PJSUA2 STARTED ***" << std::endl;
+    // Start the library (worker threads etc)
+    ep->libStart();
+    std::cout << "*** PJSUA2 STARTED ***" << std::endl;
 
     // this->invite();
     // pj_thread_sleep(10000);

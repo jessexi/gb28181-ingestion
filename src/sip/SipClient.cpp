@@ -25,23 +25,23 @@ static pjsip_module clientSipMoudle =
 
 static void call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e)
 {
-    std::cout << "call_on_state_changed ......" << inv->state << std::endl;
+    std::cout << "*************  call_on_state_changed ......" << inv->state << std::endl;
 }
 
 static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e)
 {
-    std::cout << "call_on_forked ......" << std::endl;
+    std::cout << "************* call_on_forked ......" << std::endl;
 }
 
 static void call_on_media_update(pjsip_inv_session *inv_ses,
                                  pj_status_t status)
 {
-    std::cout << "call_on_media_update ......" << std::endl;
+    std::cout << "************* call_on_media_update ......" << std::endl;
 }
 
 static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-    std::cout << "call_on_send_ack ......" << std::endl;
+    std::cout << "************* call_on_send_ack ......" << std::endl;
     pj_status_t status;
     pjsip_tx_data *tdata;
     status = pjsip_inv_create_ack(inv, rdata->msg_info.cseq->cseq, &tdata);
@@ -53,6 +53,8 @@ static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 /* regc callback */
 static void register_cb(struct pjsip_regc_cbparam *param)
 {
+    std::cout<< "*********** register call back" << std::endl;
+
     pjsip_regc_info info;
     pj_status_t status;
     status = pjsip_regc_get_info(param->regc, &info);
@@ -172,6 +174,17 @@ std::string SipClient::createPlaySDP(std::string fromDeviceid,
     return str;
 };
 
+int SipClient::sendBye()
+{
+    pj_status_t status;
+    pjsip_tx_data *tdata;
+    status = pjsip_inv_end_session(m_invsession, 603, NULL, &tdata);
+    pjsip_inv_send_msg(m_invsession, tdata);
+    pjsip_inv_terminate(m_invsession, 603, true);
+    pjsip_endpt_unregister_module(m_sipEndpt, pjsip_inv_usage_instance());
+    m_invInit = false;
+}
+
 int SipClient::initInvParam(TransportContext &tsxContext)
 {
     if (m_invInit)
@@ -197,12 +210,17 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     std::string tempip = tsxContext.fromIP;
     pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.fromPort);
     // contact means recver
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tsxContext.contactID.data(), tsxContext.contactIP.data(), tsxContext.contactPort);
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tsxContext.fromID.data(), tsxContext.fromIP.data(), tsxContext.fromPort);
+    tempid = tsxContext.toID;
+    tempip = tsxContext.contactIP;
+    unsigned short  port = tsxContext.contactPort;
+    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    //    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", "34020000001320000002", tempip.data(), tsxContext.toPort);
     tempid = tsxContext.toID;
     tempip = tsxContext.toIP;
-    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.toPort);
-    //    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", "34020000001320000002", tempip.data(), tsxContext.toPort);
-    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.toPort);
+    port = tsxContext.toPort;
+
+    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
 
     pj_str_t fromstr = pj_str(from);
     pj_str_t targetstr = pj_str(target);
@@ -211,7 +229,7 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     /* Create UAC dialog */
     status = pjsip_dlg_create_uac(pjsip_ua_instance(),
                                   &fromstr,      /* local URI */
-                                  &contactStr,          /* local Contact */
+                                  NULL,          /* local Contact */
                                   &tostr,        /* remote URI */
                                   &tostr,        /* remote target */
                                   &m_invitedlg); /* dialog */
@@ -243,7 +261,7 @@ bool SipClient::sendInvite(std::string deviceid, std::string mediaRecvIp, short 
         tdata->msg->body = pjsip_msg_body_create(m_sipPool, &type.type, &type.subtype, &sdptext);
         auto hName = pj_str("Subject");
         char subjectUrl[128] = {0};
-        pj_ansi_snprintf(subjectUrl, 128, "%s:0, %s:0", m_sipClientparam.localDeviceID.c_str(), deviceid.c_str());
+        pj_ansi_snprintf(subjectUrl, 128, "%s:0, %s:0", m_tsxContext.toID.c_str(), deviceid.c_str());
         auto hValue = pj_str(const_cast<char *>(subjectUrl));
         auto hdr = pjsip_generic_string_hdr_create(m_sipPool, &hName, &hValue);
         pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(hdr));
@@ -261,8 +279,8 @@ void SipClient::setClientParamContext()
     std::string serverip;
     std::string clientid;
     std::string clientip;
-    std::string contactId;
-    std::string contactIp;
+    std::string cameraId;
+    std::string cameraIp;
 
     serverid = "34020000000020000001";
 
@@ -273,20 +291,20 @@ void SipClient::setClientParamContext()
     clientip = "172.18.64.51";
 
     
-    contactId ="34020000001180000001";
-    contactIp ="172.18.64.151";
+    cameraId ="34020000001180000001";
+    cameraIp ="172.18.64.151";
 
     m_tsxContext.fromID = clientid;
     m_tsxContext.fromIP = clientip;
     m_tsxContext.fromPort = 5060;
 
-    m_tsxContext.toID = serverid;
-    m_tsxContext.toIP = serverip;
-    m_tsxContext.toPort = 15060;
+    m_tsxContext.toID = cameraId;
+    m_tsxContext.toIP = cameraIp;
+    m_tsxContext.toPort = 5060;
 
-    m_tsxContext.contactID = contactId;
-    m_tsxContext.contactIP = contactIp;
-    m_tsxContext.contactPort = 5060;
+    m_tsxContext.contactID = serverid;
+    m_tsxContext.contactIP = serverip;
+    m_tsxContext.contactPort = 15060;
 
     m_sipClientparam.localAddress = clientip;
     m_sipClientparam.localDeviceID = clientid;
@@ -361,6 +379,7 @@ pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
     return PJ_TRUE;
 };
 
+//send keep alive
 void SipClient::startEventLoop()
 {
     pj_status_t status;
@@ -379,13 +398,20 @@ void SipClient::sendKeepAlive(std::string deviceid)
     //transfer issue, must do this
     std::string tempid = m_tsxContext.fromID;
     std::string tempip = m_tsxContext.fromIP;
+    unsigned int port = m_tsxContext.fromPort;
+
     pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.fromPort);
     // contact means recver
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", m_tsxContext.contactID.data(), m_tsxContext.contactIP.data(), m_tsxContext.contactPort);
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", m_tsxContext.fromID.data(), m_tsxContext.fromIP.data(), m_tsxContext.fromPort);
+    tempid = m_tsxContext.contactID;
+    tempip = m_tsxContext.contactIP;
+    port = m_tsxContext.contactPort;
+    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+
     tempid = m_tsxContext.toID;
     tempip = m_tsxContext.toIP;
-    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.toPort);
-    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.toPort);
+    port = m_tsxContext.toPort;
+    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
 
     pj_ansi_snprintf(querInfo, 256, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                     "<Notify>\n"

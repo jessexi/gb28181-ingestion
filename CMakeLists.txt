@@ -20,8 +20,11 @@ cmake_policy(SET CMP0081 NEW)
 # set the project name
 project(${project_name} VERSION ${gb_version})
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PJSIP libpjproject>=1.14 REQUIRED)
+
+#include_directories(${PROJECT_SOURCE_DIR}/include/)
+include_directories(/usr/local/include/)
+#link_directories(${PROJECT_SOURCE_DIR}/pjlibs/)
+link_directories(/usr/local/lib)
 
 
 find_package(JRTPLIB REQUIRED)
@@ -29,12 +32,6 @@ find_package(JRTPLIB REQUIRED)
 include_directories(${JRTPLIB_INCLUDE_DIRS})
 link_directories(${JRTPLIB_LIBRARY_DIRS})
 
-foreach(dep ${JRTPLIB_LIBRARIES})
-    message(STATUS "JRTPLIB - ${dep}")
-endforeach()
-
-include_directories(${PJSIP_INCLUDE_DIRS})
-link_directories(${PJSIP_LIBRARY_DIRS})
 
 include_directories(${PROJECT_SOURCE_DIR}/)
 
@@ -56,7 +53,8 @@ else()
 endif()
 endforeach()
 
-target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES})
+target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB  ${JRTPLIB_LIBRARIES}
+      pjsua pjsua2 pjlib-util pjnath pjmedia pjsip pj pthread pjsip-ua srtp )
 target_include_directories(${project_name} PUBLIC
                           "${PROJECT_SOURCE_DIR}/src/sip"
                           )

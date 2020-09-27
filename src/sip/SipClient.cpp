@@ -2,7 +2,6 @@
 #include "ThreadPool.h"
 #include "RequestBuilder.hpp"
 
-
 bool SipClient::quit_flag = false;
 pjsip_endpoint *SipClient::m_sipEndpt = NULL;
 ThreadPool *SipClient::executor = new ThreadPool(2);
@@ -18,7 +17,7 @@ static pjsip_module clientSipMoudle =
         NULL,                           /* stop()			*/
         NULL,                           /* unload()			*/
         &SipClient::on_rx_request,      /* on_rx_request()		*/
-        NULL,                           /* on_rx_response()		*/
+        &SipClient::on_rx_response,     /* on_rx_response()		*/
         NULL,                           /* on_tx_request.		*/
         NULL,                           /* on_tx_response()		*/
         NULL,                           /* on_tsx_state()		*/
@@ -42,14 +41,13 @@ static void call_on_media_update(pjsip_inv_session *inv_ses,
 
 static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 {
-
+    std::cout << "call_on_send_ack ......" << std::endl;
     pj_status_t status;
     pjsip_tx_data *tdata;
     status = pjsip_inv_create_ack(inv, rdata->msg_info.cseq->cseq, &tdata);
     pj_assert(status == PJ_SUCCESS);
     status = pjsip_inv_send_msg(inv, tdata);
     pj_assert(status == PJ_SUCCESS);
-    std::cout << "call_on_send_ack ......" << std::endl;
 }
 
 /* regc callback */
@@ -106,9 +104,10 @@ pj_status_t SipClient::initSipMoudle(std::string endptName, unsigned short tsxPo
     return status;
 };
 
-void SipClient::registerClient2(){
-       RequestBuilder *builder = new RequestBuilder(); 
-       builder->clientRegister();
+void SipClient::registerClient2()
+{
+    RequestBuilder *builder = new RequestBuilder();
+    builder->clientRegister();
 }
 
 pj_status_t SipClient::registerClient(SIPClient &cltparam)
@@ -125,7 +124,7 @@ pj_status_t SipClient::registerClient(SIPClient &cltparam)
 
     pj_ansi_sprintf(dst, "<sip:%s@%s:%d>", cltparam.sipserverID.c_str(), cltparam.sipserverAddress.c_str(), cltparam.sipserverPort);
     pj_str_t contacts[] = {
-        {local, static_cast<pj_ssize_t>( strlen(local))}};
+        {local, static_cast<pj_ssize_t>(strlen(local))}};
     pj_str_t localstr = pj_str(local);
     pj_str_t dststr = pj_str(dst);
     status = pjsip_regc_init(regc, &dststr, &localstr, &localstr, 1, contacts, cltparam.regValidSeconds);
@@ -198,7 +197,7 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     std::string tempip = tsxContext.fromIP;
     pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.fromPort);
     // contact means recver
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.contactPort);
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tsxContext.contactID.data(), tsxContext.contactIP.data(), tsxContext.contactPort);
     tempid = tsxContext.toID;
     tempip = tsxContext.toIP;
     pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.toPort);
@@ -208,10 +207,11 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     pj_str_t fromstr = pj_str(from);
     pj_str_t targetstr = pj_str(target);
     pj_str_t tostr = pj_str(to);
+    pj_str_t contactStr = pj_str(contact);
     /* Create UAC dialog */
     status = pjsip_dlg_create_uac(pjsip_ua_instance(),
                                   &fromstr,      /* local URI */
-                                  NULL,          /* local Contact */
+                                  &contactStr,          /* local Contact */
                                   &tostr,        /* remote URI */
                                   &tostr,        /* remote target */
                                   &m_invitedlg); /* dialog */
@@ -261,6 +261,8 @@ void SipClient::setClientParamContext()
     std::string serverip;
     std::string clientid;
     std::string clientip;
+    std::string contactId;
+    std::string contactIp;
 
     serverid = "34020000000020000001";
 
@@ -270,6 +272,10 @@ void SipClient::setClientParamContext()
 
     clientip = "172.18.64.51";
 
+    
+    contactId ="34020000001180000001";
+    contactIp ="172.18.64.151";
+
     m_tsxContext.fromID = clientid;
     m_tsxContext.fromIP = clientip;
     m_tsxContext.fromPort = 5060;
@@ -278,8 +284,8 @@ void SipClient::setClientParamContext()
     m_tsxContext.toIP = serverip;
     m_tsxContext.toPort = 15060;
 
-    m_tsxContext.contactID = clientid;
-    m_tsxContext.contactIP = clientip;
+    m_tsxContext.contactID = contactId;
+    m_tsxContext.contactIP = contactIp;
     m_tsxContext.contactPort = 5060;
 
     m_sipClientparam.localAddress = clientip;
@@ -302,7 +308,7 @@ void SipClient::onVidoPlay()
     // this->registerClient2();
     this->registerClient(m_sipClientparam);
 
-    pj_thread_sleep(10000);
+    pj_thread_sleep(1000);
 
     m_rtpRecver = new RtpRecver();
     // connect(m_rtpRecver);
@@ -319,11 +325,22 @@ void SipClient::onVidoPlay()
     this->sendInvite(deviceid, recvip, recvport);
 };
 
-void  SipClient::runRtpServer(RtpRecver *rtpRecver){
-   std::cout << "start to . bind server" << std::endl;
+void SipClient::runRtpServer(RtpRecver *rtpRecver)
+{
+    std::cout << "start to . bind server" << std::endl;
 
-   rtpRecver->run(); 
+    rtpRecver->run();
+}
 
+pj_bool_t SipClient::on_rx_response(pjsip_rx_data *rdata)
+{
+
+    char *rdata_info;
+    pj_status_t status;
+    pjsip_transaction *tsx;
+    pjsip_tx_data *tdata;
+    rdata_info = pjsip_rx_data_get_info(rdata);
+    std::cout << "On_rx_response is called" << std::endl;
 }
 
 pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
@@ -334,7 +351,8 @@ pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
     pjsip_tx_data *tdata;
     rdata_info = pjsip_rx_data_get_info(rdata);
     printf("The received transmission data info is %s \n", rdata_info);
-    printf("On_rx_repuest is called");
+    std::cout << "On_rx_response is called" << std::endl;
+
     status = pjsip_tsx_create_uas(&clientSipMoudle, rdata, &tsx);
     pjsip_tsx_recv_msg(tsx, rdata);
     status = pjsip_endpt_create_response(m_sipEndpt, rdata, 200, NULL, &tdata);
@@ -361,22 +379,23 @@ void SipClient::sendKeepAlive(std::string deviceid)
     //transfer issue, must do this
     std::string tempid = m_tsxContext.fromID;
     std::string tempip = m_tsxContext.fromIP;
-    pj_ansi_snprintf(from,64,"sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.fromPort);
+    pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.fromPort);
     // contact means recver
-    pj_ansi_snprintf(contact,64,"sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.contactPort);
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", m_tsxContext.contactID.data(), m_tsxContext.contactIP.data(), m_tsxContext.contactPort);
     tempid = m_tsxContext.toID;
     tempip = m_tsxContext.toIP;
     pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.toPort);
     pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.toPort);
 
-    pj_ansi_snprintf(querInfo, 256,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                     "<Notify>\n"
-                                     "<CmdType>Keepalive</CmdType>\n"
-                                     "<SN>43</SN>\n"
-                                     "<DeviceID>%s</DeviceID>\n"
-                                     "</Notify>\n", deviceid.c_str());
+    pj_ansi_snprintf(querInfo, 256, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                    "<Notify>\n"
+                                    "<CmdType>Keepalive</CmdType>\n"
+                                    "<SN>43</SN>\n"
+                                    "<DeviceID>%s</DeviceID>\n"
+                                    "</Notify>\n",
+                     deviceid.c_str());
     pjsip_tx_data *tdata;
-    pjsip_method method = { PJSIP_OTHER_METHOD, { "MESSAGE", 7 }};
+    pjsip_method method = {PJSIP_OTHER_METHOD, {"MESSAGE", 7}};
 
     auto infoStr = pj_str(querInfo);
     auto contactStr = pj_str(contact);
@@ -394,13 +413,14 @@ void SipClient::sendKeepAlive(std::string deviceid)
 int SipClient::keepAlive_thread(void *arg)
 {
 
-    SipClient *client = (SipClient*)arg;
-    while (!quit_flag && client) {
+    SipClient *client = (SipClient *)arg;
+    while (!quit_flag && client)
+    {
         pj_thread_sleep(30000);
-        std::string localid ="34020000001320000003";
+        std::string localid = "34020000001320000003";
         client->sendKeepAlive(localid);
     }
-   return 0;
+    return 0;
 }
 
 SipClient::SipClient(){};

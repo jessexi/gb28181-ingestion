@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
 {
     cout << "gb28181 init!  " << endl;
 
-    RequestBuilder *builder = new RequestBuilder();
-    builder->init();
-    delete builder;
+    // RequestBuilder *builder = new RequestBuilder();
+    // builder->init();
+    // delete builder;
 
     client= new SipClient();
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     client->onVidoPlay();
 
 
-    signal(SIGINT, signalHandler);
+    // signal(SIGINT, signalHandler);
     pj_thread_sleep(10000000);
 
     return 0;

@@ -7,9 +7,11 @@ pjsip_endpoint *SipClient::m_sipEndpt = NULL;
 ThreadPool *SipClient::executor = new ThreadPool(2);
 
 static pjsip_module clientSipMoudle =
+
+
     {
         NULL, NULL,                     /* prev, next.		*/
-        {"gb28181-client", 12},         /* Name.			*/
+        { "gb28181-client", 12 },         /* Name.			*/
         -1,                             /* Id			*/
         PJSIP_MOD_PRIORITY_APPLICATION, /* Priority			*/
         NULL,                           /* load()			*/
@@ -17,7 +19,7 @@ static pjsip_module clientSipMoudle =
         NULL,                           /* stop()			*/
         NULL,                           /* unload()			*/
         &SipClient::on_rx_request,      /* on_rx_request()		*/
-        &SipClient::on_rx_response,     /* on_rx_response()		*/
+        NULL,     /* on_rx_response()		*/
         NULL,                           /* on_tx_request.		*/
         NULL,                           /* on_tx_response()		*/
         NULL,                           /* on_tsx_state()		*/
@@ -25,7 +27,7 @@ static pjsip_module clientSipMoudle =
 
 static void call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e)
 {
-    std::cout << "*************  call_on_state_changed ......" << inv->state << std::endl;
+    std::cout << "*************  call_on_state_changed ......" << inv->cause << pjsip_get_status_text(inv->cause)->ptr << std::endl;
 }
 
 static void call_on_forked(pjsip_inv_session *inv, pjsip_event *e)
@@ -37,6 +39,18 @@ static void call_on_media_update(pjsip_inv_session *inv_ses,
                                  pj_status_t status)
 {
     std::cout << "************* call_on_media_update ......" << std::endl;
+}
+
+static void call_on__new_session(pjsip_inv_session *inv, pjsip_event *e)
+{
+    std::cout << "************* call_on_new_session ......" << std::endl;
+}
+
+static void call_on_tsx_state_changed(pjsip_inv_session *inv,
+                               pjsip_transaction *tsx,
+                               pjsip_event *e)
+{
+    std::cout << "*************  call_on_tsx_state_changed ......" << inv->cause << pjsip_get_status_text(inv->cause)->ptr << std::endl;
 }
 
 static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
@@ -53,7 +67,7 @@ static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
 /* regc callback */
 static void register_cb(struct pjsip_regc_cbparam *param)
 {
-    std::cout<< "*********** register call back" << std::endl;
+    std::cout << "*********** register call back" << std::endl;
 
     pjsip_regc_info info;
     pj_status_t status;
@@ -196,6 +210,9 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     inv_cb.on_state_changed = &call_on_state_changed;
     inv_cb.on_new_session = &call_on_forked;
     inv_cb.on_media_update = &call_on_media_update;
+    inv_cb.on_new_session = &call_on__new_session;
+    inv_cb.on_tsx_state_changed = &call_on_tsx_state_changed;
+
     inv_cb.on_send_ack = &call_on_send_ack; //must
     /* Initialize invite session module:  */
     status = pjsip_inv_usage_init(m_sipEndpt, &inv_cb);
@@ -213,7 +230,7 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tsxContext.fromID.data(), tsxContext.fromIP.data(), tsxContext.fromPort);
     tempid = tsxContext.toID;
     tempip = tsxContext.contactIP;
-    unsigned short  port = tsxContext.contactPort;
+    unsigned short port = tsxContext.contactPort;
     pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
     //    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", "34020000001320000002", tempip.data(), tsxContext.toPort);
     tempid = tsxContext.toID;
@@ -290,9 +307,8 @@ void SipClient::setClientParamContext()
 
     clientip = "172.18.64.51";
 
-    
-    cameraId ="34020000001180000001";
-    cameraIp ="172.18.64.151";
+    cameraId = "34020000001180000001";
+    cameraIp = "172.18.64.151";
 
     m_tsxContext.fromID = clientid;
     m_tsxContext.fromIP = clientip;
@@ -352,24 +368,25 @@ void SipClient::runRtpServer(RtpRecver *rtpRecver)
 
 pj_bool_t SipClient::on_rx_response(pjsip_rx_data *rdata)
 {
-
+      std::cout << "On_rx_response is called" << std::endl;
     char *rdata_info;
     pj_status_t status;
     pjsip_transaction *tsx;
     pjsip_tx_data *tdata;
     rdata_info = pjsip_rx_data_get_info(rdata);
-    std::cout << "On_rx_response is called" << std::endl;
 }
 
 pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
 {
+   
     char *rdata_info;
     pj_status_t status;
     pjsip_transaction *tsx;
     pjsip_tx_data *tdata;
     rdata_info = pjsip_rx_data_get_info(rdata);
-    printf("The received transmission data info is %s \n", rdata_info);
-    std::cout << "On_rx_response is called" << std::endl;
+
+     std::cout << "******* on_rx_request is called ******* The received transmission data info is : " << rdata_info << std::endl;
+
 
     status = pjsip_tsx_create_uas(&clientSipMoudle, rdata, &tsx);
     pjsip_tsx_recv_msg(tsx, rdata);

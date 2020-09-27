@@ -86,6 +86,7 @@ void RtpRecver::run()
 void RtpRecver::ProcessRTPPacket(const RTPSourceData &srcdat, const RTPPacket &rtppack)
 {
     // You can inspect the packet and the source's info here
+    std::cout << "Got new RTP packet" << rtppack.GetExtensionID() << std::endl;
     if ((rtppack.GetExtendedSequenceNumber() - m_lastSeqNumber) > 1)
     {
         std::cout << "Got packet error " << rtppack.GetExtendedSequenceNumber() << " xxx " << rtppack.GetExtendedSequenceNumber() - m_lastSeqNumber << "  time " << rtppack.GetTimestamp() << std::endl;

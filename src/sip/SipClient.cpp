@@ -126,7 +126,7 @@ pj_status_t SipClient::registerClient(SIPClient &cltparam)
 
     pjsip_cred_info cred;
     pj_bzero(&cred, sizeof(cred));
-    cred.realm = pj_str("*");
+    cred.realm = pj_str("3402000000");
     cred.scheme = pj_str("digest");
     char username[64] = {0};
     pj_ansi_snprintf(username, 64, "%s", cltparam.localDeviceID.c_str());
@@ -259,7 +259,7 @@ void SipClient::setClientParamContext()
 
     serverip = "172.18.64.231";
 
-    clientid = "34020000001320000001";
+    clientid = "34020000001320000003";
 
     clientip = "172.18.64.51";
 
@@ -296,13 +296,14 @@ void SipClient::onVidoPlay()
     // connect(m_rtpRecver);
 
     std::string deviceid = m_tsxContext.fromID;
-    std::string recvip = "127.0.0.1";
-    int recvport = 5056;
+    std::string recvip = "172.18.64.51";
+    int recvport = 9000;
 
     m_rtpRecver->init(recvip, recvport);
 
     executor->enqueue(SipClient::runRtpServer, m_rtpRecver);
 
+    this->sendKeepAlive(m_tsxContext.fromID);
     this->sendInvite(deviceid, recvip, recvport);
 };
 
@@ -380,10 +381,11 @@ void SipClient::sendKeepAlive(std::string deviceid)
 /* Worker thread */
 int SipClient::keepAlive_thread(void *arg)
 {
-    SipClient *client = new SipClient();
+
+    SipClient *client = (SipClient*)arg;
     while (!quit_flag && client) {
-        pj_thread_sleep(30000);
-        std::string localid ="34020000001320000001";
+        pj_thread_sleep(10000);
+        std::string localid ="34020000001320000003";
         client->sendKeepAlive(localid);
     }
    return 0;

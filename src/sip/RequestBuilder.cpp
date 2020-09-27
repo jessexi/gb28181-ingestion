@@ -22,39 +22,98 @@ public:
 
 void RequestBuilder::init()
 {
-    std::cout << "builder init!" << std::endl;
+    // std::cout << "builder init!" << std::endl;
 
-    ep = new Endpoint();
+    // ep = new Endpoint();
 
-    ep->libCreate();
+    // ep->libCreate();
 
-    // Initialize endpoint
-    EpConfig ep_cfg;
-    ep->libInit(ep_cfg);
+    // // Initialize endpoint
+    // EpConfig ep_cfg;
+    // ep->libInit(ep_cfg);
 
-    // Create SIP transport. Error handling sample is shown
-    TransportConfig tcfg;
-    tcfg.port = 5061;
-    try
-    {
-        ep->transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
-    }
-    catch (Error &err)
-    {
-        std::cout << err.info() << std::endl;
-    }
+    // // Create SIP transport. Error handling sample is shown
+    // TransportConfig tcfg;
+    // tcfg.port = 5060;
+    // try
+    // {
+    //     ep->transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
+    // }
+    // catch (Error &err)
+    // {
+    //     std::cout << err.info() << std::endl;
+    // }
 
-    // Start the library (worker threads etc)
-    ep->libStart();
-    std::cout << "*** PJSUA2 STARTED ***" << std::endl;
+    // // Start the library (worker threads etc)
+    // ep->libStart();
+    // std::cout << "*** PJSUA2 STARTED ***" << std::endl;
 
-    this->invite();
-    pj_thread_sleep(10000);
+    // this->invite();
+    // pj_thread_sleep(10000);
 
 
     //Add account
     AccountConfig accCfg;
-    accCfg.idUri = "sip:34020000022000000002@172.18.64.51:5061";
+    accCfg.idUri = "sip:34020000001320000003@172.18.64.51:5060";
+    accCfg.regConfig.registrarUri = "sip:34020000002000000001@172.18.64.231:15060";
+    AuthCredInfo cred("digest", "*", "34020000002000000001", 0, "12345678");
+    accCfg.sipConfig.authCreds.push_back(cred);
+    std::cout << std::endl
+              << "REGISTER" << std::endl
+              << std::endl;
+
+    // Create the account
+    acc = new MyAccount;
+    acc->create(accCfg);
+
+    // Here we don't have anything else to do..
+    pj_thread_sleep(1000);
+
+    // std::cout << std::endl
+    //           << "INVITE" << std::endl
+    //           << std::endl;
+
+    // // send invide
+    // pj_str_t target = pj_str(const_cast<char *>(accCfg.regConfig.registrarUri.c_str()));
+    // pj_str_t from = pj_str(const_cast<char *>(accCfg.idUri.c_str()));
+    // pjsip_tx_data *tdata;
+
+    // pj_str_t text = pj_str(const_cast<char *>(this->buildInvite().c_str()));
+    // pj_str_t contact = this->pjHeaderBuilder();
+
+    
+
+
+    // pjsip_endpt_create_request(pjsua_get_pjsip_endpt(), pjsip_get_invite_method(), &target, &from, &target, NULL , NULL, -1, &text, &tdata);
+    // pjsip_endpt_send_request_stateless(pjsua_get_pjsip_endpt(), tdata, NULL, NULL);
+
+    // pj_thread_sleep(1000);
+
+    // pjsua_call_id call_id = 1;
+    // Call *call = new Call(*acc, call_id);
+    // acc->calls.push_back(call);
+
+    // CallOpParam prm(true);
+    // prm.opt.audioCount = 0;
+    // prm.opt.videoCount = 0;
+    // std::cout << std::endl
+    //           << "CALL START" << std::endl
+    //           << std::endl;
+    // call->makeCall("sip:34020000002000000001@172.18.64.231:15060", prm);
+    // std::cout << std::endl
+    //           << "CALL END" << std::endl
+    //           << std::endl;
+
+    pj_thread_sleep(1000);
+
+    // Delete the account. This will unregister from server
+    // delete acc;
+}
+
+void RequestBuilder::clientRegister(){
+     //Add account
+    AccountConfig accCfg;
+    accCfg.idUri = "sip:34020000001320000003@172.18.64.51:5060";
     accCfg.regConfig.registrarUri = "sip:34020000002000000001@172.18.64.231:15060";
     AuthCredInfo cred("digest", "*", "34020000002000000001", 0, "12345678");
     accCfg.sipConfig.authCreds.push_back(cred);
@@ -65,49 +124,7 @@ void RequestBuilder::init()
     // Create the account
     MyAccount *acc = new MyAccount;
     acc->create(accCfg);
-
-    // Here we don't have anything else to do..
-    pj_thread_sleep(1000);
-
-    std::cout << std::endl
-              << "INVITE" << std::endl
-              << std::endl;
-
-    // send invide
-    pj_str_t target = pj_str(const_cast<char *>(accCfg.regConfig.registrarUri.c_str()));
-    pj_str_t from = pj_str(const_cast<char *>(accCfg.idUri.c_str()));
-    pjsip_tx_data *tdata;
-
-    pj_str_t text = pj_str(const_cast<char *>(this->buildInvite().c_str()));
-    pj_str_t contact = this->pjHeaderBuilder();
-
-    
-
-
-    pjsip_endpt_create_request(pjsua_get_pjsip_endpt(), pjsip_get_invite_method(), &target, &from, &target, NULL , NULL, -1, &text, &tdata);
-    pjsip_endpt_send_request_stateless(pjsua_get_pjsip_endpt(), tdata, NULL, NULL);
-
-    pj_thread_sleep(1000);
-
-    pjsua_call_id call_id = 1;
-    Call *call = new Call(*acc, call_id);
-    acc->calls.push_back(call);
-
-    CallOpParam prm(true);
-    prm.opt.audioCount = 0;
-    prm.opt.videoCount = 0;
-    std::cout << std::endl
-              << "CALL START" << std::endl
-              << std::endl;
-    call->makeCall("sip:34020000002000000001@172.18.64.231:15060", prm);
-    std::cout << std::endl
-              << "CALL END" << std::endl
-              << std::endl;
-
-    pj_thread_sleep(1000);
-
-    // Delete the account. This will unregister from server
-    delete acc;
+    pj_thread_sleep(2000);
 }
 
 RequestBuilder::RequestBuilder(/* args */)

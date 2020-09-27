@@ -31,6 +31,7 @@ public:
     pj_status_t initPJlib();
     pj_status_t initSipMoudle(std::string endpointName , unsigned short tsxPort);
     pj_status_t registerClient(SIPClient &cltparam);
+    void registerClient2();
     //callback
     static pj_bool_t on_rx_request( pjsip_rx_data *rdata );
     pj_status_t unregisterClient(SIPClient &cltparam);

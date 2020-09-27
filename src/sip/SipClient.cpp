@@ -1,5 +1,7 @@
 #include "SipClient.hpp"
 #include "ThreadPool.h"
+#include "RequestBuilder.hpp"
+
 
 bool SipClient::quit_flag = false;
 pjsip_endpoint *SipClient::m_sipEndpt = NULL;
@@ -104,6 +106,11 @@ pj_status_t SipClient::initSipMoudle(std::string endptName, unsigned short tsxPo
     return status;
 };
 
+void SipClient::registerClient2(){
+       RequestBuilder *builder = new RequestBuilder(); 
+       builder->clientRegister();
+}
+
 pj_status_t SipClient::registerClient(SIPClient &cltparam)
 {
     pj_status_t status;
@@ -126,7 +133,7 @@ pj_status_t SipClient::registerClient(SIPClient &cltparam)
 
     pjsip_cred_info cred;
     pj_bzero(&cred, sizeof(cred));
-    cred.realm = pj_str("3402000000");
+    cred.realm = pj_str("*");
     cred.scheme = pj_str("digest");
     char username[64] = {0};
     pj_ansi_snprintf(username, 64, "%s", cltparam.localDeviceID.c_str());
@@ -265,7 +272,7 @@ void SipClient::setClientParamContext()
 
     m_tsxContext.fromID = clientid;
     m_tsxContext.fromIP = clientip;
-    m_tsxContext.fromPort = 5061;
+    m_tsxContext.fromPort = 5060;
 
     m_tsxContext.toID = serverid;
     m_tsxContext.toIP = serverip;
@@ -273,11 +280,11 @@ void SipClient::setClientParamContext()
 
     m_tsxContext.contactID = clientid;
     m_tsxContext.contactIP = clientip;
-    m_tsxContext.contactPort = 5061;
+    m_tsxContext.contactPort = 5060;
 
     m_sipClientparam.localAddress = clientip;
     m_sipClientparam.localDeviceID = clientid;
-    m_sipClientparam.localSipPort = 5061;
+    m_sipClientparam.localSipPort = 5060;
     m_sipClientparam.localPasswd = "12345678";
     m_sipClientparam.sipserverAddress = serverip;
     m_sipClientparam.sipserverID = serverid;
@@ -292,6 +299,11 @@ void SipClient::setClientParamContext()
 void SipClient::onVidoPlay()
 {
     this->setClientParamContext();
+    // this->registerClient2();
+    this->registerClient(m_sipClientparam);
+
+    pj_thread_sleep(10000);
+
     m_rtpRecver = new RtpRecver();
     // connect(m_rtpRecver);
 
@@ -299,11 +311,11 @@ void SipClient::onVidoPlay()
     std::string recvip = "172.18.64.51";
     int recvport = 9000;
 
-    m_rtpRecver->init(recvip, recvport);
+    m_rtpRecver->init("0.0.0.0", recvport);
 
     executor->enqueue(SipClient::runRtpServer, m_rtpRecver);
 
-    this->sendKeepAlive(m_tsxContext.fromID);
+    // this->sendKeepAlive(m_tsxContext.fromID);
     this->sendInvite(deviceid, recvip, recvport);
 };
 
@@ -384,7 +396,7 @@ int SipClient::keepAlive_thread(void *arg)
 
     SipClient *client = (SipClient*)arg;
     while (!quit_flag && client) {
-        pj_thread_sleep(10000);
+        pj_thread_sleep(30000);
         std::string localid ="34020000001320000003";
         client->sendKeepAlive(localid);
     }

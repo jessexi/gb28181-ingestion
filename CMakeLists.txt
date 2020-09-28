@@ -56,7 +56,7 @@ else()
 endif()
 endforeach()
 
-target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES})
+target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES} avcodec avformat avutil )
 target_include_directories(${project_name} PUBLIC
                           "${PROJECT_SOURCE_DIR}/src/sip"
                           )

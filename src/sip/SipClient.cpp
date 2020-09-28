@@ -241,12 +241,18 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     //transfer issue, must do this
     std::string tempid = tsxContext.fromID;
     std::string tempip = tsxContext.fromIP;
-    pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), tsxContext.fromPort);
+    unsigned short port = tsxContext.fromPort;
+    pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
     // contact means recver
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tsxContext.fromID.data(), tsxContext.fromIP.data(), tsxContext.fromPort);
-    tempid = tsxContext.toID;
+    tempid = tsxContext.contactID;
     tempip = tsxContext.contactIP;
-    unsigned short port = tsxContext.contactPort;
+    port = tsxContext.contactPort;
+    
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    tempid = m_sipClientparam.sipserverID;
+    tempip = m_sipClientparam.sipserverAddress;
+    port = m_sipClientparam.sipserverPort;
+
     pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
     //    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", "34020000001320000002", tempip.data(), tsxContext.toPort);
     tempid = tsxContext.toID;
@@ -262,9 +268,9 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     /* Create UAC dialog */
     status = pjsip_dlg_create_uac(pjsip_ua_instance(),
                                   &fromstr,      /* local URI */
-                                  NULL,          /* local Contact */
+                                  &contactStr,          /* local Contact */
                                   &tostr,        /* remote URI */
-                                  &tostr,        /* remote target */
+                                  &targetstr,        /* remote target */
                                   &m_invitedlg); /* dialog */
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
     m_invInit = true;
@@ -331,12 +337,12 @@ void SipClient::setClientParamContext()
     m_tsxContext.fromPort = 5060;
 
     m_tsxContext.toID = cameraId;
-    m_tsxContext.toIP = cameraIp;
-    m_tsxContext.toPort = 5060;
+    m_tsxContext.toIP = serverip;
+    m_tsxContext.toPort = 15060;
 
-    m_tsxContext.contactID = serverid;
-    m_tsxContext.contactIP = serverip;
-    m_tsxContext.contactPort = 15060;
+    m_tsxContext.contactID = cameraId;
+    m_tsxContext.contactIP = cameraIp;
+    m_tsxContext.contactPort = 5060;
 
     m_sipClientparam.localAddress = clientip;
     m_sipClientparam.localDeviceID = clientid;
@@ -441,10 +447,13 @@ void SipClient::sendKeepAlive(std::string deviceid)
 
     pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), m_tsxContext.fromPort);
     // contact means recver
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", m_tsxContext.fromID.data(), m_tsxContext.fromIP.data(), m_tsxContext.fromPort);
     tempid = m_tsxContext.contactID;
     tempip = m_tsxContext.contactIP;
     port = m_tsxContext.contactPort;
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    tempid = m_sipClientparam.sipserverID;
+    tempip = m_sipClientparam.sipserverAddress;
+    port = m_sipClientparam.sipserverPort;
     pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
 
     tempid = m_tsxContext.toID;

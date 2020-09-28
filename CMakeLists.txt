@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD 11)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
-cmake_policy(SET CMP0081 NEW)
+#cmake_policy(SET CMP0081 NEW)
 
 # set the project name
 project(${project_name} VERSION ${gb_version})

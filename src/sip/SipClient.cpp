@@ -305,7 +305,7 @@ void SipClient::setClientParamContext()
 
     clientid = "34020000001320000003";
 
-    clientip = "172.18.64.51";
+    clientip = "172.18.64.170";
 
     cameraId = "34020000001180000001";
     cameraIp = "172.18.64.151";
@@ -348,7 +348,7 @@ void SipClient::onVidoPlay()
     // connect(m_rtpRecver);
 
     std::string deviceid = m_tsxContext.fromID;
-    std::string recvip = "172.18.64.51";
+    std::string recvip = "172.18.64.170";
     int recvport = 9000;
 
     m_rtpRecver->init("0.0.0.0", recvport);
@@ -466,6 +466,7 @@ int SipClient::keepAlive_thread(void *arg)
     return 0;
 }
 
-SipClient::SipClient(){};
+SipClient::SipClient(){
+};
 
 SipClient::~SipClient(){};

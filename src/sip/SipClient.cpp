@@ -354,6 +354,8 @@ void SipClient::setClientParamContext()
 
 void SipClient::onVidoPlay()
 {
+
+
     this->setClientParamContext();
     // this->registerClient2();
     this->registerClient(m_sipClientparam);
@@ -497,6 +499,8 @@ int SipClient::eventloop_thread(void *arg)
     return 0;
 }
 
-SipClient::SipClient(){};
+SipClient::SipClient(){
+    
+};
 
 SipClient::~SipClient(){};

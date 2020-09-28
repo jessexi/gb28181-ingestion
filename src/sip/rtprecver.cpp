@@ -2,6 +2,7 @@
 #include <string>
 #include <stdlib.h>
 #include "pstoh264.hpp"
+#include "H264ToImage.hpp"
 
 #define BUFFERSIZE 1024 * 1024
 #define SORT_MAX_PACKET_COUNT 200
@@ -34,6 +35,9 @@ void checkerror(int rtperr)
 
 void RtpRecver::init(std::string recvIp, unsigned short recvPort)
 {
+    mH264ToImage = new H264ToImage();
+    mH264ToImage->init();
+
     RTPUDPv4TransmissionParams transparams;
     RTPSessionParams sessparams;
     uint16_t portbase = recvPort;
@@ -103,7 +107,10 @@ void RtpRecver::ProcessRTPPacket(const RTPSourceData &srcdat, const RTPPacket &r
             int ret = PsToH264::GetH246FromPs(m_frameBuffer, m_bufferSize, &h264Buffer, &h264length);
             if (ret > 0)
             {
-                // emit sigRecvedFrame(QByteArray(h264Buffer, h264length));
+                    std::cout << "decode ps to h264 success" << std::endl;
+                    std::string name = "camera_"  +std::to_string(++imageNo) + "_img_";
+                
+                    mH264ToImage->save2Image(h264Buffer, h264length, const_cast<char *>(name.c_str()));
             }
             memset(m_frameBuffer, 0, BUFFERSIZE);
             m_bufferSize = 0;

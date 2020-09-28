@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include "H264ToImage.hpp"
 
 using namespace jrtplib;
 
@@ -36,7 +37,9 @@ private:
     bool m_brecvOver;
     char *m_frameBuffer;
     int m_bufferSize;
+    int imageNo = 0;
     int m_lastSeqNumber;
+    H264ToImage *mH264ToImage;
     // void sigRecvedFrame(QByteArray);
 };
 

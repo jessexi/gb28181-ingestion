@@ -37,7 +37,9 @@ int main(int argc, char *argv[])
 
 
     // signal(SIGINT, signalHandler);
-    pj_thread_sleep(10000000);
+    pj_thread_sleep(10000);
+
+    client->sendBye();
 
     return 0;
 }

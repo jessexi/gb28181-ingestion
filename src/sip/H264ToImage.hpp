@@ -1,8 +1,11 @@
 #ifndef H264_2_IMAGE_HPP
 #define H264_2_IMAGE_HPP
-#include <libavcodec/avcodec.h>
+
 #include <string>
 #include <iostream>
+extern "C" {
+  #include <libavcodec/avcodec.h>
+}
 
 #define INBUF_SIZE 4096
 

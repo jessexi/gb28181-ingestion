@@ -90,7 +90,7 @@ void RtpRecver::run()
 void RtpRecver::ProcessRTPPacket(const RTPSourceData &srcdat, const RTPPacket &rtppack)
 {
     // You can inspect the packet and the source's info here
-    std::cout << "Got new RTP packet" << rtppack.GetExtensionID() << std::endl;
+    // std::cout << "Got new RTP packet" << rtppack.GetExtensionID() << std::endl;
     if ((rtppack.GetExtendedSequenceNumber() - m_lastSeqNumber) > 1)
     {
         std::cout << "Got packet error " << rtppack.GetExtendedSequenceNumber() << " xxx " << rtppack.GetExtendedSequenceNumber() - m_lastSeqNumber << "  time " << rtppack.GetTimestamp() << std::endl;
@@ -108,7 +108,7 @@ void RtpRecver::ProcessRTPPacket(const RTPSourceData &srcdat, const RTPPacket &r
             if (ret > 0)
             {
                     std::cout << "decode ps to h264 success" << std::endl;
-                    std::string name = "camera_"  +std::to_string(++imageNo) + "_img_";
+                    std::string name = "./camera_"  +std::to_string(++imageNo) + "_img_";
                 
                     mH264ToImage->save2Image(h264Buffer, h264length, const_cast<char *>(name.c_str()));
             }

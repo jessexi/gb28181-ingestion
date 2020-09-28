@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD 11)
 if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
-cmake_policy(SET CMP0081 NEW)
+#cmake_policy(SET CMP0081 NEW)
 
 # set the project name
 project(${project_name} VERSION ${gb_version})
@@ -39,6 +39,38 @@ link_directories(${PJSIP_LIBRARY_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/)
 
 
+pkg_check_modules(LIBAVFORMAT libavformat REQUIRED)
+pkg_check_modules(LIBAVCODEC libavcodec REQUIRED)
+pkg_check_modules(LIBAVUTIL  libavutil REQUIRED)
+pkg_check_modules(LIBSWSCALE libswscale REQUIRED)
+
+
+include_directories(	
+	${LIBAVFORMAT_INCLUDE_DIRS}
+	${LIBAVCODEC_INCLUDE_DIRS}
+	${LIBAVUTIL_INCLUDE_DIRS}
+	${LIBSWSCALE_INCLUDE_DIRS}
+)
+
+
+set( 
+	FFMPEG_LIBRARIES	
+	${LIBAVFORMAT_LIBRARIES}
+	${LIBAVCODEC_LIBRARIES}
+	${LIBAVUTIL_LIBRARIES}
+	${LIBSWSCALE_LIBRARIES}
+	${EXTRA_LIBRARIES}
+)
+
+link_directories(${LIBAVFORMAT_LIBRARY_DIRS})
+link_directories(${LIBAVCODEC_LIBRARY_DIRS})
+link_directories(${LIBAVUTIL_LIBRARY_DIRS})
+link_directories(${LIBSWSCALE_LIBRARY_DIRS})
+
+foreach(dep ${FFMPEG_LIBRARIES})
+    message(STATUS "FFMPEG_LIBRARIES - ${dep}")
+endforeach()
+
 add_subdirectory(src/sip)
 
 
@@ -56,7 +88,7 @@ else()
 endif()
 endforeach()
 
-target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES} avcodec avformat avutil )
+target_link_libraries(${project_name} PUBLIC ${pjsip_list} SIP_LIB ${JRTPLIB_LIBRARIES} avcodec avutil avformat swscale )
 target_include_directories(${project_name} PUBLIC
                           "${PROJECT_SOURCE_DIR}/src/sip"
                           )

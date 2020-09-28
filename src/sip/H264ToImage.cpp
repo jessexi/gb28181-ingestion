@@ -1,5 +1,8 @@
 #include "H264ToImage.hpp"
-#include <libavcodec/avcodec.h>
+extern "C" {
+   #include <libavcodec/avcodec.h>
+}
+
 
 
 void H264ToImage::init()
@@ -116,8 +119,8 @@ H264ToImage::H264ToImage(/* args */)
 
 H264ToImage::~H264ToImage()
 {
-    // av_parser_close(parser);
-    // avcodec_free_context(&c);
-    // av_frame_free(&frame);
-    // av_packet_free(&pkt);
+    av_parser_close(parser);
+    avcodec_free_context(&c);
+    av_frame_free(&frame);
+    av_packet_free(&pkt);
 }

@@ -42,7 +42,7 @@ public:
     int initInvParam(TransportContext &tsxContext);
     void onVidoPlay();
     static void runRtpServer( RtpRecver *rtpRecver);
-    static int SipClient::eventloop_thread(void *arg);
+    static int eventloop_thread(void *arg);
     void startEventLoop();
     static int keepAlive_thread(void *arg);
     void sendKeepAlive(std::string deviceid);

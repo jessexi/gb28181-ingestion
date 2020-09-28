@@ -108,7 +108,7 @@ void RtpRecver::ProcessRTPPacket(const RTPSourceData &srcdat, const RTPPacket &r
             if (ret > 0)
             {
                     std::cout << "decode ps to h264 success" << std::endl;
-                    std::string name = "./camera_"  +std::to_string(++imageNo) + "_img_";
+                    std::string name = "./camera_"  +std::to_string(++imageNo) + "_img";
                 
                     mH264ToImage->save2Image(h264Buffer, h264length, const_cast<char *>(name.c_str()));
             }

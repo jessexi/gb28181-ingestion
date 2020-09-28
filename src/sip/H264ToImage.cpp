@@ -73,6 +73,8 @@ static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
     FILE *f;
     int i;
 
+    std::cout << "file name:" << filename <<std::endl;
+
     f = fopen(filename,"wb");
     fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
     for (i = 0; i < ysize; i++)
@@ -106,11 +108,10 @@ void H264ToImage::decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt,
 
         /* the picture is allocated by the decoder. no need to
            free it */
-        snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
-    }
-
-     pgm_save(frame->data[0], frame->linesize[0],
+        snprintf(buf, sizeof(buf), "%s-%d.jpeg", filename, dec_ctx->frame_number);
+        pgm_save(frame->data[0], frame->linesize[0],
                  frame->width, frame->height, buf);
+    }     
 }
 
 H264ToImage::H264ToImage(/* args */)

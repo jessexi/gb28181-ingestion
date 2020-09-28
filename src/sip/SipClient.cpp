@@ -25,6 +25,18 @@ static pjsip_module clientSipMoudle =
         NULL,                           /* on_tsx_state()		*/
 };
 
+pj_status_t SipClient::on_tx_request(pjsip_tx_data *tdata)
+{
+    std::cout << "发送下行请求帧" << std::endl;
+    return PJ_SUCCESS;
+}
+
+pj_status_t SipClient::on_tx_response(pjsip_tx_data *tdata)
+{
+    std::cout << "发送下行回应帧" << std::endl;
+    return PJ_SUCCESS;
+}
+
 static void call_on_state_changed(pjsip_inv_session *inv, pjsip_event *e)
 {
     std::cout << "*************  call_on_state_changed ......" << inv->cause << pjsip_get_status_text(inv->cause)->ptr << std::endl;
@@ -116,6 +128,10 @@ pj_status_t SipClient::initSipMoudle(std::string endptName, unsigned short tsxPo
     /* Initialize 100rel support */
     status = pjsip_100rel_init_module(m_sipEndpt);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
+
+    clientSipMoudle.on_rx_request = &SipClient::on_rx_request;
+    clientSipMoudle.on_rx_response = &SipClient::on_rx_response;
+    clientSipMoudle.on_tx_request = &SipClient::on_tx_request;
     status = pjsip_endpt_register_module(m_sipEndpt, &clientSipMoudle);
     return status;
 };
@@ -361,24 +377,27 @@ void SipClient::onVidoPlay()
 
 void SipClient::runRtpServer(RtpRecver *rtpRecver)
 {
-    std::cout << "start to . bind server" << std::endl;
+    std::cout << "_____start to . bind server" << std::endl;
 
     rtpRecver->run();
 }
 
 pj_bool_t SipClient::on_rx_response(pjsip_rx_data *rdata)
 {
-      std::cout << "On_rx_response is called" << std::endl;
+      std::cout << "________On_rx_response is called" << std::endl;
     char *rdata_info;
     pj_status_t status;
     pjsip_transaction *tsx;
     pjsip_tx_data *tdata;
     rdata_info = pjsip_rx_data_get_info(rdata);
+    return PJ_TRUE;
 }
 
 pj_bool_t SipClient::on_rx_request(pjsip_rx_data *rdata)
 {
-   
+
+
+    PJ_LOG(2,("sample", "error=%s", "On_RX_REQUEST DEBUG"));
     char *rdata_info;
     pj_status_t status;
     pjsip_transaction *tsx;
@@ -402,6 +421,7 @@ void SipClient::startEventLoop()
     pj_status_t status;
 
     status = pj_thread_create(m_sipPool, "keepalive", &keepAlive_thread, this, 0, 0, &m_keepalivethread);
+    status =  pj_thread_create(m_sipPool, "eventloop", &eventloop_thread, this, 0, 0, &m_eventloopthread);
 };
 
 void SipClient::sendKeepAlive(std::string deviceid)
@@ -462,6 +482,17 @@ int SipClient::keepAlive_thread(void *arg)
         pj_thread_sleep(30000);
         std::string localid = "34020000001320000003";
         client->sendKeepAlive(localid);
+    }
+    return 0;
+}
+
+/* Worker thread */
+int SipClient::eventloop_thread(void *arg)
+{
+    SipClient *client = (SipClient*)arg;
+    while (!quit_flag && client) {
+        pj_time_val timeout = {0, 10};
+        pjsip_endpt_handle_events(m_sipEndpt, &timeout);
     }
     return 0;
 }

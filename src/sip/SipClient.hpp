@@ -36,11 +36,13 @@ public:
     //callback
     static pj_bool_t on_rx_request( pjsip_rx_data *rdata );
     static pj_bool_t on_rx_response( pjsip_rx_data *rdata );
-
+    static pj_status_t on_tx_request(pjsip_tx_data *tdata);
+    static pj_status_t on_tx_response(pjsip_tx_data *tdata);
     pj_status_t unregisterClient(SIPClient &cltparam);
     int initInvParam(TransportContext &tsxContext);
     void onVidoPlay();
     static void runRtpServer( RtpRecver *rtpRecver);
+    static int SipClient::eventloop_thread(void *arg);
     void startEventLoop();
     static int keepAlive_thread(void *arg);
     void sendKeepAlive(std::string deviceid);
@@ -50,8 +52,6 @@ public:
     ~SipClient();
 
 };
-
-
 
 
 #endif // !1

@@ -147,6 +147,33 @@ pj_status_t SipClient::registerClient(SIPClient &cltparam)
     pj_status_t status;
     pjsip_regc *regc;
 
+    char from[64] = {0};
+    char to[64] = {0};
+    char target[64] = {0};
+    char contact[64] = {0};
+    //transfer issue, must do this
+    std::string tempid = m_tsxContext.fromID;
+    std::string tempip = m_tsxContext.fromIP;
+    unsigned int port = m_tsxContext.fromPort;
+
+    // pj_ansi_snprintf(from, 64, "<sip:%s@%s>", tempid.data(), m_sipClientparam.sipserverDomain.data());
+    pj_ansi_snprintf(from, 64, "<sip:%s@%s:%d>", tempid.data(), tempip.data(), m_tsxContext.fromPort);
+    // contact means recver
+    tempid = m_tsxContext.contactID;
+    tempip = m_tsxContext.contactIP;
+    port = m_tsxContext.contactPort;
+    pj_ansi_snprintf(contact, 64, "<sip:%s@%s:%d>", tempid.data(), tempip.data(), port);
+
+    tempid = m_tsxContext.toID;
+    tempip = m_tsxContext.toIP;
+    port = m_tsxContext.toPort;
+    // pj_ansi_snprintf(to, 64, "<sip:%s@%s>", tempid.data(), m_sipClientparam.sipserverDomain.data());
+    pj_ansi_snprintf(to, 64, "<sip:%s@%s:%d>", tempid.data(), tempip.data(), port);
+
+    auto contactStr = pj_str(contact);
+    auto fromStr = pj_str(from);
+    auto toStr = pj_str(to);
+
     char local[64] = {0};
     char dst[64] = {0};
     status = pjsip_regc_create(m_sipEndpt, this, &register_cb, &regc);
@@ -159,7 +186,7 @@ pj_status_t SipClient::registerClient(SIPClient &cltparam)
         {local, static_cast<pj_ssize_t>(strlen(local))}};
     pj_str_t localstr = pj_str(local);
     pj_str_t dststr = pj_str(dst);
-    status = pjsip_regc_init(regc, &dststr, &localstr, &localstr, 1, contacts, cltparam.regValidSeconds);
+    status = pjsip_regc_init(regc, &dststr, &fromStr, &fromStr, 1, &contactStr, cltparam.regValidSeconds);
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
 
     pjsip_cred_info cred;
@@ -242,25 +269,29 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     std::string tempid = tsxContext.fromID;
     std::string tempip = tsxContext.fromIP;
     unsigned short port = tsxContext.fromPort;
-    pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    // pj_ansi_snprintf(from, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    pj_ansi_snprintf(from, 64, "sip:%s@%s", tempid.data(), m_sipClientparam.sipserverDomain.data());
     // contact means recver
     tempid = tsxContext.contactID;
     tempip = tsxContext.contactIP;
     port = tsxContext.contactPort;
-    
-    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
-    tempid = m_sipClientparam.sipserverID;
-    tempip = m_sipClientparam.sipserverAddress;
-    port = m_sipClientparam.sipserverPort;
 
-    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
-    //    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", "34020000001320000002", tempip.data(), tsxContext.toPort);
+    pj_ansi_snprintf(contact, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    // tempid = m_sipClientparam.sipserverID;
+    // tempip = m_sipClientparam.sipserverAddress;
+    // port = m_sipClientparam.sipserverPort;
     tempid = tsxContext.toID;
     tempip = tsxContext.toIP;
     port = tsxContext.toPort;
 
-    pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    pj_ansi_snprintf(target, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+  
+    tempid = tsxContext.toID;
+    tempip = tsxContext.toIP;
+    port = tsxContext.toPort;
 
+    // pj_ansi_snprintf(to, 64, "sip:%s@%s:%d", tempid.data(), tempip.data(), port);
+    pj_ansi_snprintf(to, 64, "sip:%s@%s", tempid.data(), m_sipClientparam.sipserverDomain.data());
     pj_str_t fromstr = pj_str(from);
     pj_str_t targetstr = pj_str(target);
     pj_str_t tostr = pj_str(to);
@@ -300,7 +331,7 @@ bool SipClient::sendInvite(std::string deviceid, std::string mediaRecvIp, short 
         tdata->msg->body = pjsip_msg_body_create(m_sipPool, &type.type, &type.subtype, &sdptext);
         auto hName = pj_str("Subject");
         char subjectUrl[128] = {0};
-        pj_ansi_snprintf(subjectUrl, 128, "%s:0, %s:0", m_tsxContext.toID.c_str(), deviceid.c_str());
+        pj_ansi_snprintf(subjectUrl, 128, "%s:0039469837, %s:0", m_tsxContext.toID.c_str(), deviceid.c_str());
         auto hValue = pj_str(const_cast<char *>(subjectUrl));
         auto hdr = pjsip_generic_string_hdr_create(m_sipPool, &hName, &hValue);
         pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(hdr));
@@ -325,30 +356,33 @@ void SipClient::setClientParamContext()
 
     serverip = "172.18.64.231";
 
-    clientid = "34020000001320000003";
+    clientid = "34020000000020000005";
 
     clientip = "172.18.64.51";
 
-    cameraId = "34020000001180000001";
+    cameraId = "34020000001310000001";
     cameraIp = "172.18.64.151";
 
     m_tsxContext.fromID = clientid;
-    m_tsxContext.fromIP = clientip;
+    m_tsxContext.fromIP = serverip;
     m_tsxContext.fromPort = 5060;
 
     m_tsxContext.toID = cameraId;
     m_tsxContext.toIP = serverip;
     m_tsxContext.toPort = 15060;
 
-    m_tsxContext.contactID = cameraId;
-    m_tsxContext.contactIP = cameraIp;
+    m_tsxContext.contactID = clientid;
+    m_tsxContext.contactIP = clientip;
     m_tsxContext.contactPort = 5060;
 
     m_sipClientparam.localAddress = clientip;
     m_sipClientparam.localDeviceID = clientid;
     m_sipClientparam.localSipPort = 5060;
     m_sipClientparam.localPasswd = "12345678";
+    m_sipClientparam.localDomain = "3402000005";
     m_sipClientparam.sipserverAddress = serverip;
+    m_sipClientparam.sipserverDomain = "3402000000";
+    // m_sipClientparam.sipserverDomain ="172.18.64.231";
     m_sipClientparam.sipserverID = serverid;
     m_sipClientparam.sipserverPort = 15060;
     m_sipClientparam.heartbeatInterval = 30;
@@ -366,7 +400,7 @@ void SipClient::onVidoPlay()
     // this->registerClient2();
     this->registerClient(m_sipClientparam);
 
-    pj_thread_sleep(1000);
+    pj_thread_sleep(10000);
 
     m_rtpRecver = new RtpRecver();
     // connect(m_rtpRecver);
@@ -491,7 +525,7 @@ int SipClient::keepAlive_thread(void *arg)
     while (!quit_flag && client)
     {
         pj_thread_sleep(30000);
-        std::string localid = "34020000001320000003";
+        std::string localid = "34020000000020000005";
         client->sendKeepAlive(localid);
     }
     return 0;

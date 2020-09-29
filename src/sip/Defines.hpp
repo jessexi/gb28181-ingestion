@@ -61,6 +61,7 @@ typedef struct tagSIPClient
 
     std::string localDeviceID;
     std::string localAddress; //ip
+    std::string localDomain;
     unsigned short localSipPort;
     std::string localPasswd;
     unsigned long regValidSeconds; //s

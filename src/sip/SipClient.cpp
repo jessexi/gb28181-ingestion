@@ -27,6 +27,19 @@ static pjsip_module clientSipMoudle =
 
 pj_status_t SipClient::on_tx_request(pjsip_tx_data *tdata)
 {
+    pjsip_msg   *msg = tdata->msg;
+    const pjsip_hdr *hdr=(const pjsip_hdr*)msg->hdr.next, *end=&msg->hdr;
+
+    // for (; hdr!=end; hdr = hdr->next) {
+    //     std::cout << "------ check header on_tx_request ---- : " <<  hdr->name.ptr << std::endl;
+    // }
+
+    pj_str_t name =  pj_str("Authorization");
+    auto auth_hdr = (pjsip_authorization_hdr*)pjsip_msg_find_hdr_by_name(msg, &name, NULL);
+    if (auth_hdr != NULL) {
+        std::cout << "------ Auth Header Found ---- : " <<  auth_hdr->scheme.ptr << std::endl;
+    }
+
     std::cout << "发送下行请求帧" << std::endl;
     return PJ_SUCCESS;
 }
@@ -74,13 +87,20 @@ static void call_on_send_ack(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     pj_assert(status == PJ_SUCCESS);
     status = pjsip_inv_send_msg(inv, tdata);
     pj_assert(status == PJ_SUCCESS);
+
 }
 
 /* regc callback */
 static void register_cb(struct pjsip_regc_cbparam *param)
 {
     std::cout << "*********** register call back" << std::endl;
+ 
+    pjsip_rx_data   *rdata = param->rdata;
+    const pjsip_hdr *hdr=(const pjsip_hdr*)rdata->msg_info.msg->hdr.next, *end=&rdata->msg_info.msg->hdr;
 
+    for (; hdr!=end; hdr = hdr->next) {
+        std::cout << "------ check auth header0 ---- : " <<  hdr->name.ptr << std::endl;
+    }
     pjsip_regc_info info;
     pj_status_t status;
     status = pjsip_regc_get_info(param->regc, &info);
@@ -296,6 +316,11 @@ int SipClient::initInvParam(TransportContext &tsxContext)
     pj_str_t targetstr = pj_str(target);
     pj_str_t tostr = pj_str(to);
     pj_str_t contactStr = pj_str(contact);
+
+    pjsip_cred_info	cred[1];
+
+	
+
     /* Create UAC dialog */
     status = pjsip_dlg_create_uac(pjsip_ua_instance(),
                                   &fromstr,      /* local URI */
@@ -305,6 +330,21 @@ int SipClient::initInvParam(TransportContext &tsxContext)
                                   &m_invitedlg); /* dialog */
     PJ_ASSERT_RETURN(status == PJ_SUCCESS, 1);
     m_invInit = true;
+    
+    char username[64] = {0};
+    pj_ansi_snprintf(username, 64, "%s", m_sipClientparam.localDeviceID.c_str());
+
+    cred[0].realm	  = pj_str("*");
+	cred[0].scheme    = pj_str("digest");
+	cred[0].username  = pj_str(username);
+	cred[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+	cred[0].data      = pj_str("12345678");
+
+ 
+	pjsip_auth_clt_set_credentials( &m_invitedlg->auth_sess, 1, cred);
+   
+
+
     return PJ_SUCCESS;
 };
 
@@ -335,6 +375,14 @@ bool SipClient::sendInvite(std::string deviceid, std::string mediaRecvIp, short 
         auto hValue = pj_str(const_cast<char *>(subjectUrl));
         auto hdr = pjsip_generic_string_hdr_create(m_sipPool, &hName, &hValue);
         pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(hdr));
+
+        auto note = pj_str("Note");
+        char note_content[128] = {0};
+        pj_ansi_snprintf(note_content, 128, "Digest nonce=\"%s\", algorithm=MD5", m_tsxContext.toID.c_str());
+        auto note_ctr = pj_str(const_cast<char *>(note_content));
+        auto noteHdr = pjsip_generic_string_hdr_create(m_sipPool, &note, &note_ctr);
+        pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(noteHdr));
+
         pjsip_inv_send_msg(m_invsession, tdata);
     }
     catch (...)
@@ -400,7 +448,7 @@ void SipClient::onVidoPlay()
     // this->registerClient2();
     this->registerClient(m_sipClientparam);
 
-    pj_thread_sleep(10000);
+    pj_thread_sleep(5000);
 
     m_rtpRecver = new RtpRecver();
     // connect(m_rtpRecver);

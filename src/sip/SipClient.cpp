@@ -380,8 +380,8 @@ bool SipClient::sendInvite(std::string deviceid, std::string mediaRecvIp, short 
         char note_content[128] = {0};
         pj_ansi_snprintf(note_content, 128, "Digest nonce=\"%s\", algorithm=MD5", m_tsxContext.toID.c_str());
         auto note_ctr = pj_str(const_cast<char *>(note_content));
-        auto noteHdr = pjsip_generic_string_hdr_create(m_sipPool, &note, &note_ctr);
-        pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(noteHdr));
+        // auto noteHdr = pjsip_generic_string_hdr_create(m_sipPool, &note, &note_ctr);
+        // pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr *>(noteHdr));
 
         pjsip_inv_send_msg(m_invsession, tdata);
     }
@@ -400,7 +400,7 @@ void SipClient::setClientParamContext()
     std::string cameraId;
     std::string cameraIp;
 
-    serverid = "34020000000020000001";
+    serverid = "34020000002020000001";
 
     serverip = "172.18.64.231";
 
@@ -415,7 +415,7 @@ void SipClient::setClientParamContext()
     m_tsxContext.fromIP = serverip;
     m_tsxContext.fromPort = 5060;
 
-    m_tsxContext.toID = cameraId;
+    m_tsxContext.toID = serverid;
     m_tsxContext.toIP = serverip;
     m_tsxContext.toPort = 15060;
 
